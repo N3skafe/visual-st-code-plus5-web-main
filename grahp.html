@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f8fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .graph-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .info-panel {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+
+        .node text {
+            pointer-events: none;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .node.highlighted circle {
+            stroke: #ff5722;
+            stroke-width: 3px;
+            r: 18;
+        }
+
+        .link.highlighted {
+            stroke: #ff5722;
+            stroke-width: 3px;
+            stroke-opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Graph Visualization</h1>
+        <p class="subtitle">Explore the graph structure by interacting with nodes</p>
+        
+        <div class="controls">
+            <button id="reset-btn">Reset View</button>
+            <button id="highlight-all-btn">Highlight All Paths</button>
+            <button id="toggle-physics-btn">Freeze Layout</button>
+        </div>
+        
+        <div class="graph-container">
+            <div id="graph"></div>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>About This Graph</h3>
+            <p>This is an interactive visualization of a directed graph with 13 nodes (0-12).</p>
+            <p><strong>How to use:</strong></p>
+            <ul>
+                <li>Click on any node to highlight its connections</li>
+                <li>Drag nodes to rearrange the layout</li>
+                <li>Hover over nodes to see their ID</li>
+                <li>Use the controls to explore different views of the graph</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Graph data
+            const nodes = [
+                { id: 0, label: "0" },
+                { id: 1, label: "1" },
+                { id: 2, label: "2" },
+                { id: 3, label: "3" },
+                { id: 4, label: "4" },
+                { id: 5, label: "5" },
+                { id: 6, label: "6" },
+                { id: 7, label: "7" },
+                { id: 8, label: "8" },
+                { id: 9, label: "9" },
+                { id: 10, label: "10" },
+                { id: 11, label: "11" },
+                { id: 12, label: "12" }
+            ];
+            
+            const links = [
+                { source: 0, target: 1 },
+                { source: 0, target: 2 },
+                { source: 0, target: 6 },
+                { source: 1, target: 3 },
+                { source: 3, target: 4 },
+                { source: 3, target: 5 },
+                { source: 6, target: 7 },
+                { source: 6, target: 9 },
+                { source: 7, target: 8 },
+                { source: 9, target: 10 },
+                { source: 9, target: 11 },
+                { source: 9, target: 12 }
+            ];
+            
+            // Create SVG container
+            const container = document.getElementById('graph');
+            const containerRect = container.getBoundingClientRect();
+            const width = containerRect.width || 960;
+            const height = 500;
+            
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", height);
+            container.appendChild(svg);
+            
+            // Create marker for arrow heads
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            svg.appendChild(defs);
+            
+            const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+            marker.setAttribute("id", "arrowhead");
+            marker.setAttribute("viewBox", "0 -5 10 10");
+            marker.setAttribute("refX", "25");
+            marker.setAttribute("refY", "0");
+            marker.setAttribute("orient", "auto");
+            marker.setAttribute("markerWidth", "6");
+            marker.setAttribute("markerHeight", "6");
+            defs.appendChild(marker);
+            
+            const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            arrowPath.setAttribute("d", "M0,-5L10,0L0,5");
+            arrowPath.setAttribute("fill", "#999");
+            marker.appendChild(arrowPath);
+            
+            // Create the link lines
+            const linksGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(linksGroup);
+            
+            const linkElements = links.map(link => {
+                const linkElement = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                linkElement.setAttribute("class", "link");
+                linkElement.setAttribute("marker-end", "url(#arrowhead)");
+                linkElement.dataset.source = link.source;
+                linkElement.dataset.target = link.target;
+                linksGroup.appendChild(linkElement);
+                return linkElement;
+            });
+            
+            // Create the node elements
+            const nodesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(nodesGroup);
+            
+            // Color scheme for nodes
+            const colors = [
+                "#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", 
+                "#1abc9c", "#34495e", "#e67e22", "#27ae60", "#8e44ad",
+                "#d35400", "#16a085", "#95a5a6"
+            ];
+            
+            const nodeElements = nodes.map((node, index) => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "node");
+                g.dataset.id = node.id;
+                
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("r", "15");
+                circle.setAttribute("fill", colors[index % colors.length]);
+                
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.textContent = node.label;
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("dy", "0.3em");
+                text.setAttribute("fill", "white");
+                
+                g.appendChild(circle);
+                g.appendChild(text);
+                nodesGroup.appendChild(g);
+                
+                // Add click event
+                g.addEventListener("click", () => highlightConnections(node.id));
+                
+                // Add hover events for tooltip
+                const tooltip = document.getElementById("tooltip");
+                g.addEventListener("mouseover", (e) => {
+                    tooltip.textContent = `Node ${node.label}`;
+                    tooltip.style.display = "block";
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                });
+                
+                g.addEventListener("mouseout", () => {
+                    tooltip.style.display = "none";
+                });
+                
+                return { element: g, data: node };
+            });
+            
+            // Physics simulation
+            let simulation = {
+                alpha: 0.1,
+                positions: {},
+                initialized: false,
+                running: true,
+                
+                initialize: function() {
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    
+                    // Initialize with a reasonable layout based on the graph structure
+                    // Root node in center
+                    this.positions[0] = { x: centerX, y: 80, fx: null, fy: null };
+                    
+                    // First level
+                    this.positions[1] = { x: centerX - 120, y: 180, fx: null, fy: null };
+                    this.positions[2] = { x: centerX, y: 180, fx: null, fy: null };
+                    this.positions[6] = { x: centerX + 120, y: 180, fx: null, fy: null };
+                    
+                    // Second level
+                    this.positions[3] = { x: centerX - 120, y: 280, fx: null, fy: null };
+                    this.positions[7] = { x: centerX + 70, y: 280, fx: null, fy: null };
+                    this.positions[9] = { x: centerX + 170, y: 280, fx: null, fy: null };
+                    
+                    // Third level
+                    this.positions[4] = { x: centerX - 170, y: 380, fx: null, fy: null };
+                    this.positions[5] = { x: centerX - 70, y: 380, fx: null, fy: null };
+                    this.positions[8] = { x: centerX + 70, y: 380, fx: null, fy: null };
+                    this.positions[10] = { x: centerX + 130, y: 380, fx: null, fy: null };
+                    this.positions[11] = { x: centerX + 170, y: 380, fx: null, fy: null };
+                    this.positions[12] = { x: centerX + 210, y: 380, fx: null, fy: null };
+                    
+                    this.initialized = true;
+                    this.updatePositions();
+                },
+                
+                updatePositions: function() {
+                    // Update node positions
+                    nodeElements.forEach(node => {
+                        const pos = this.positions[node.data.id];
+                        if (pos) {
+                            node.element.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
+                        }
+                    });
+                    
+                    // Update link positions
+                    linkElements.forEach((link, index) => {
+                        const sourceId = links[index].source;
+                        const targetId = links[index].target;
+                        const source = this.positions[sourceId];
+                        const target = this.positions[targetId];
+                        
+                        if (source && target) {
+                            link.setAttribute("x1", source.x);
+                            link.setAttribute("y1", source.y);
+                            link.setAttribute("x2", target.x - 10); // Offset to account for arrow
+                            link.setAttribute("y2", target.y);
+                        }
+                    });
+                },
+                
+                tick: function() {
+                    if (!this.initialized || !this.running) return;
+                    
+                    // Apply some basic forces
+                    // This is a very simplified simulation compared to D3's force layout
+                    
+                    // Update positions
+                    this.updatePositions();
+                    
+                    // Reduce alpha
+                    this.alpha *= 0.99;
+                    
+                    // Continue ticking if alpha is high enough
+                    if (this.alpha > 0.01) {
+                        requestAnimationFrame(() => this.tick());
+                    }
+                },
+                
+                restart: function() {
+                    this.alpha = 0.5;
+                    this.running = true;
+                    this.tick();
+                },
+                
+                stop: function() {
+                    this.running = false;
+                }
+            };
+            
+            // Add dragging behavior
+            function addDragBehavior() {
+                let draggedNode = null;
+                let offsetX = 0;
+                let offsetY = 0;
+                
+                nodeElements.forEach(node => {
+                    const element = node.element;
+                    
+                    element.addEventListener("mousedown", startDrag);
+                    element.addEventListener("touchstart", startDrag);
+                    
+                    function startDrag(e) {
+                        e.preventDefault();
+                        draggedNode = node.data.id;
+                        
+                        const transform = element.getAttribute("transform");
+                        const translate = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+                        const currentX = parseFloat(translate[1]);
+                        const currentY = parseFloat(translate[2]);
+                        
+                        if (e.type === "mousedown") {
+                            offsetX = e.clientX - currentX;
+                            offsetY = e.clientY - currentY;
+                        } else {
+                            offsetX = e.touches[0].clientX - currentX;
+                            offsetY = e.touches[0].clientY - currentY;
+                        }
+                        
+                        document.addEventListener("mousemove", drag);
+                        document.addEventListener("touchmove", drag);
+                        document.addEventListener("mouseup", endDrag);
+                        document.addEventListener("touchend", endDrag);
+                    }
+                    
+                    function drag(e) {
+                        if (!draggedNode) return;
+                        
+                        let clientX, clientY;
+                        if (e.type === "mousemove") {
+                            clientX = e.clientX;
+                            clientY = e.clientY;
+                        } else {
+                            clientX = e.touches[0].clientX;
+                            clientY = e.touches[0].clientY;
+                        }
+                        
+                        const x = clientX - offsetX;
+                        const y = clientY - offsetY;
+                        
+                        // Update node position
+                        simulation.positions[draggedNode].x = x;
+                        simulation.positions[draggedNode].y = y;
+                        simulation.positions[draggedNode].fx = x; // Fix position
+                        simulation.positions[draggedNode].fy = y; // Fix position
+                        
+                        simulation.updatePositions();
+                    }
+                    
+                    function endDrag() {
+                        draggedNode = null;
+                        document.removeEventListener("mousemove", drag);
+                        document.removeEventListener("touchmove", drag);
+                        document.removeEventListener("mouseup", endDrag);
+                        document.removeEventListener("touchend", endDrag);
+                    }
+                });
+            }
+            
+            // Highlight connections
+            function highlightConnections(nodeId) {
+                // Reset all highlights
+                nodeElements.forEach(node => {
+                    node.element.classList.remove("highlighted");
+                });
+                
+                linkElements.forEach(link => {
+                    link.classList.remove("highlighted");
+                });
+                
+                // Highlight selected node
+                const nodeElement = nodeElements.find(n => n.data.id === nodeId);
+                if (nodeElement) {
+                    nodeElement.element.classList.add("highlighted");
+                }
+                
+                // Highlight connected links and nodes
+                links.forEach((link, index) => {
+                    if (link.source === nodeId) {
+                        linkElements[index].classList.add("highlighted");
+                        const targetNode = nodeElements.find(n => n.data.id === link.target);
+                        if (targetNode) {
+                            targetNode.element.classList.add("highlighted");
+                        }
+                    }
+                    
+                    if (link.target === nodeId) {
+                        linkElements[index].classList.add("highlighted");
+                        const sourceNode = nodeElements.find(n => n.data.id === link.source);
+                        if (sourceNode) {
+                            sourceNode.element.classList.add("highlighted");
+                        }
+                    }
+                });
+            }
+            
+            // Highlight all paths from root
+            function highlightAllPaths() {
+                // Reset all highlights
+                nodeElements.forEach(node => {
+                    node.element.classList.remove("highlighted");
+                });
+                
+                linkElements.forEach(link => {
+                    link.classList.remove("highlighted");
+                });
+                
+                // Recursively highlight paths
+                function highlightPath(nodeId, delay) {
+                    setTimeout(() => {
+                        const nodeElement = nodeElements.find(n => n.data.id === nodeId);
+                        if (nodeElement) {
+                            nodeElement.element.classList.add("highlighted");
+                            
+                            // Find and highlight outgoing links
+                            links.forEach((link, index) => {
+                                if (link.source === nodeId) {
+                                    setTimeout(() => {
+                                        linkElements[index].classList.add("highlighted");
+                                        highlightPath(link.target, 300);
+                                    }, 200);
+                                }
+                            });
+                        }
+                    }, delay);
+                }
+                
+                // Start from root node (0)
+                highlightPath(0, 0);
+            }
+            
+            // Toggle physics
+            let physicsEnabled = true;
+            function togglePhysics() {
+                physicsEnabled = !physicsEnabled;
+                const btn = document.getElementById("toggle-physics-btn");
+                
+                if (physicsEnabled) {
+                    // Release fixed positions
+                    Object.values(simulation.positions).forEach(pos => {
+                        pos.fx = null;
+                        pos.fy = null;
+                    });
+                    simulation.restart();
+                    btn.textContent = "Freeze Layout";
+                } else {
+                    // Fix current positions
+                    Object.values(simulation.positions).forEach(pos => {
+                        pos.fx = pos.x;
+                        pos.fy = pos.y;
+                    });
+                    simulation.stop();
+                    btn.textContent = "Enable Physics";
+                }
+            }
+            
+            // Reset view
+            function resetView() {
+                // Clear highlights
+                nodeElements.forEach(node => {
+                    node.element.classList.remove("highlighted");
+                });
+                
+                linkElements.forEach(link => {
+                    link.classList.remove("highlighted");
+                });
+                
+                // Reset positions
+                simulation.initialize();
+                simulation.restart();
+                
+                // Reset physics
+                physicsEnabled = true;
+                document.getElementById("toggle-physics-btn").textContent = "Freeze Layout";
+            }
+            
+            // Set up event listeners for buttons
+            document.getElementById("reset-btn").addEventListener("click", resetView);
+            document.getElementById("highlight-all-btn").addEventListener("click", highlightAllPaths);
+            document.getElementById("toggle-physics-btn").addEventListener("click", togglePhysics);
+            
+            // Initialize simulation and dragging
+            simulation.initialize();
+            simulation.restart();
+            addDragBehavior();
+        });
+    </script>
+</body>
+</html>
