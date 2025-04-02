@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇 친구의 특별한 기억 가방 (MCP)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #5D8BF4;
+            --secondary: #FF9F68;
+            --light: #F2F7FF;
+            --dark: #2D3748;
+            --accent: #F7CD6B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        h2 {
+            color: var(--secondary);
+            font-size: 1.6rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 .emoji {
+            margin-left: 10px;
+            font-size: 1.8rem;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            opacity: 0;
+            animation: slideIn 0.6s ease-in-out forwards;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+        }
+        
+        .highlight {
+            background-color: var(--accent);
+            color: var(--dark);
+            padding: 2px 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .emoji-list {
+            list-style: none;
+        }
+        
+        .emoji-list li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            opacity: 0;
+            animation: slideIn 0.6s ease-in-out forwards;
+        }
+        
+        .emoji-list li .emoji {
+            font-size: 1.8rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .emoji-list li .text {
+            padding-top: 5px;
+        }
+        
+        .summary {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+        
+        .summary p {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            p, .emoji-list li .text {
+                font-size: 1rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MCP: 로봇 친구의 특별한 기억 가방 🎒🤖</h1>
+            <p>안녕! 오늘은 로봇 친구들이 사용하는 특별한 '기억 가방'에 대해 이야기할게요. 📚✨</p>
+        </header>
+        
+        <div class="section">
+            <h2>로봇 친구의 문제 <span class="emoji">😕</span></h2>
+            <p>로봇 친구들은 우리와 이야기할 때 작은 메모지만 가지고 있었어요. 📝 그래서 긴 이야기를 기억하기 어려웠답니다!</p>
+        </div>
+        
+        <div class="section">
+            <h2>특별한 기억 가방이 생겼어요! <span class="emoji">🎒✨</span></h2>
+            <p>이제 로봇 친구는 커다란 기억 가방을 가지게 되었어요! 이 가방을 "<span class="highlight">MCP</span>"라고 부른답니다.</p>
+            
+            <h2>이 가방은 어떻게 도움이 될까요? <span class="emoji">🤔</span></h2>
+            <ul class="emoji-list">
+                <li style="animation-delay: 0.1s">
+                    <div class="emoji">🧠</div>
+                    <div class="text"><strong>더 많이 기억해요</strong><br>작은 메모지 대신 큰 공책을 가진 것처럼, 더 긴 이야기를 기억할 수 있어요!</div>
+                </li>
+                <li style="animation-delay: 0.3s">
+                    <div class="emoji">🌟</div>
+                    <div class="text"><strong>중요한 것을 잊지 않아요</strong><br>마치 소중한 장난감을 가방에 넣어두는 것처럼, 중요한 정보를 안전하게 보관해요.</div>
+                </li>
+                <li style="animation-delay: 0.5s">
+                    <div class="emoji">🗂️</div>
+                    <div class="text"><strong>정리를 잘해요</strong><br>장난감을 색깔별로 분류하듯이, 이야기의 중요한 부분들을 잘 정리해요.</div>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>우리에게는 어떤 도움이 될까요? <span class="emoji">👧👦</span></h2>
+            <p>이제 로봇 친구와 긴~~~~ 동화책도 함께 읽을 수 있고 🦄📖, 복잡한 레고 조립 방법도 잘 알려줄 수 있어요! 🧩</p>
+            <p>로봇 친구가 "어제 뭐 물어봤더라?" 하고 잊어버리는 일이 줄어들었답니다! 😄</p>
+        </div>
+        
+        <div class="summary">
+            <h2>정리하자면... <span class="emoji">💭</span></h2>
+            <p>MCP는 로봇 친구의 마법 가방이에요! 🎒✨ 이 가방 덕분에 로봇 친구는 더 많은 것을 기억하고, 우리와 더 재미있게 대화할 수 있답니다! 🤖❤️👧👦</p>
+            <p>재미있죠? 이제 로봇 친구도 우리처럼 긴 이야기를 기억할 수 있어요! 🌈</p>
+        </div>
+    </div>
+    
+    <script>
+        // 요소들이 화면에 나타날 때 애니메이션 적용
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            
+            function checkScroll() {
+                const triggerBottom = window.innerHeight * 0.8;
+                
+                sections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top;
+                    
+                    if(sectionTop < triggerBottom) {
+                        section.style.opacity = '1';
+                    }
+                });
+            }
+            
+            // 초기 로딩 시 애니메이션 지연 시작
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.style.opacity = '1';
+                }, 300 * (index + 1));
+            });
+            
+            window.addEventListener('scroll', checkScroll);
+        });
+    </script>
+</body>
+</html>
