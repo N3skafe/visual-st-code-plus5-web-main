@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오픈소스 LLM 기반 멀티 에이전트 학습 도우미 개발 가이드</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --secondary: #7986cb;
+            --accent: #536dfe;
+            --light: #f5f7ff;
+            --dark: #1a237e;
+            --text: #424242;
+            --code-bg: #f1f3f6;
+            --code-block-bg: #282c34;
+            --success: #4caf50;
+            --info: #2196f3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--light);
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--dark);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-container {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        pre {
+            background-color: var(--code-block-bg);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            color: #abb2bf;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .copy-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-icon {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .function {
+            color: #61afef;
+        }
+
+        .number {
+            color: #d19a66;
+        }
+
+        .operator {
+            color: #56b6c2;
+        }
+
+        .class {
+            color: #e5c07b;
+        }
+
+        .learning-point {
+            background-color: #e3f2fd;
+            border-left: 4px solid var(--info);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .learning-point h4 {
+            color: var(--info);
+            margin-bottom: 0.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: none;
+            transition: background-color 0.3s;
+            font-weight: 500;
+            border-radius: 4px 4px 0 0;
+            margin-right: 0.2rem;
+        }
+
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .tab {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>오픈소스 LLM 기반 멀티 에이전트 학습 도우미 개발</h1>
+        <p>필수 기술 스택 및 구현 가이드</p>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'overview')">개요</button>
+            <button class="tab" onclick="openTab(event, 'framework')">프레임워크</button>
+            <button class="tab" onclick="openTab(event, 'memory')">메모리 관리</button>
+            <button class="tab" onclick="openTab(event, 'communication')">통신 구조</button>
+            <button class="tab" onclick="openTab(event, 'knowledge')">지식 표현</button>
+            <button class="tab" onclick="openTab(event, 'learning')">학습 경로</button>
+            <button class="tab" onclick="openTab(event, 'deployment')">개발 환경</button>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="section">
+                <h2>멀티 에이전트 학습 도우미 개발</h2>
+                <p>이미 파이썬 기반 챗봇과 Gradio UI 경험이 있으시니, 멀티 에이전트 학습 도우미를 개발하기 위해 필요한 추가 기술 스택과 학습 요소를 실질적으로 정리해 드리겠습니다.</p>
+                <p>이 가이드는 실제 구현에 필요한 핵심 기술과 코드 예제를 포함하고 있습니다.</p>
+            </div>
+        </div>
+
+        <div id="framework" class="tab-content">
+            <div class="section">
+                <h2>1. 멀티 에이전트 프레임워크</h2>
+                
+                <h3>LangChain</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> initialize_agent, Tool
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> AgentType
+<span class="keyword">from</span> langchain.llms <span class="keyword">import</span> OpenAI
+
+<span class="comment"># 도구 정의</span>
+tools = [
+    Tool(
+        name=<span class="string">"수학 도우미"</span>,
+        func=<span class="keyword">lambda</span> query: <span class="string">"수학 문제 해결: "</span> + query,
+        description=<span class="string">"수학 문제 해결에 도움이 필요할 때 사용"</span>
+    ),
+    Tool(
+        name=<span class="string">"코딩 도우미"</span>, 
+        func=<span class="keyword">lambda</span> query: <span class="string">"코드 생성: "</span> + query,
+        description=<span class="string">"프로그래밍 코드 작성에 도움이 필요할 때 사용"</span>
+    )
+]
+
+<span class="comment"># 에이전트 초기화</span>
+agent = initialize_agent(
+    tools, 
+    llm=OpenAI(temperature=<span class="number">0</span>), 
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=<span class="keyword">True</span>
+)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>다른 에이전트가 참조할 수 있는 출력을 생성하도록 도구와 프롬프트를 설계하는 기술</p>
+                </div>
+
+                <h3>AutoGen 또는 CrewAI</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> autogen <span class="keyword">import</span> AssistantAgent, UserProxyAgent
+
+<span class="comment"># 다양한 역할의 에이전트 생성</span>
+math_tutor = AssistantAgent(
+    name=<span class="string">"수학_튜터"</span>,
+    llm_config={<span class="string">"model"</span>: <span class="string">"mistral-7b-instruct"</span>, <span class="string">"temperature"</span>: <span class="number">0.1</span>},
+    system_message=<span class="string">"당신은 친절한 수학 선생님입니다..."</span>
+)
+
+coding_tutor = AssistantAgent(
+    name=<span class="string">"코딩_튜터"</span>,
+    llm_config={<span class="string">"model"</span>: <span class="string">"codellama-7b"</span>, <span class="string">"temperature"</span>: <span class="number">0.2</span>},
+    system_message=<span class="string">"당신은 경험많은 프로그래밍 교사입니다..."</span>
+)
+
+coordinator = UserProxyAgent(
+    name=<span class="string">"학습_코디네이터"</span>, 
+    human_input_mode=<span class="string">"NEVER"</span>
+)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>에이전트 간 협업 흐름 설계 및 에이전트 특성화 방법론</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="memory" class="tab-content">
+            <div class="section">
+                <h2>2. 에이전트 메모리 및 컨텍스트 관리</h2>
+                
+                <h3>벡터 스토어 및 임베딩</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma
+
+<span class="comment"># 로컬 임베딩 모델 사용</span>
+embeddings = HuggingFaceEmbeddings(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>,
+    model_kwargs={<span class="string">'device'</span>: <span class="string">'cpu'</span>}
+)
+
+<span class="comment"># 학습 자료 저장용 벡터 DB</span>
+vectorstore = Chroma(
+    collection_name=<span class="string">"learning_materials"</span>,
+    embedding_function=embeddings
+)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>효율적인 문서 색인 생성 및 관련 정보 검색 최적화 방법</p>
+                </div>
+
+                <h3>대화 메모리 관리</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+<span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationSummaryMemory
+
+<span class="comment"># 에이전트별 다양한 메모리 유형 적용</span>
+short_term_memory = ConversationBufferMemory(
+    memory_key=<span class="string">"chat_history"</span>,
+    return_messages=<span class="keyword">True</span>,
+    input_key=<span class="string">"input"</span>,
+    output_key=<span class="string">"output"</span>
+)
+
+long_term_memory = ConversationSummaryMemory(
+    llm=llm,
+    memory_key=<span class="string">"chat_summary"</span>
+)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>다중 에이전트 간 메모리 공유 메커니즘 및 장기/단기 메모리 설계</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="communication" class="tab-content">
+            <div class="section">
+                <h2>3. 에이전트 간 통신 아키텍처</h2>
+                
+                <h3>ZeroMQ 또는 Redis Pub/Sub</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">import</span> zmq
+<span class="keyword">import</span> json
+
+<span class="comment"># 메시지 브로커 설정</span>
+context = zmq.Context()
+publisher = context.socket(zmq.PUB)
+publisher.bind(<span class="string">"tcp://*:5555"</span>)
+
+subscriber = context.socket(zmq.SUB)
+subscriber.connect(<span class="string">"tcp://localhost:5555"</span>)
+subscriber.setsockopt_string(zmq.SUBSCRIBE, <span class="string">"math_agent"</span>)
+
+<span class="comment"># 에이전트 간 통신</span>
+<span class="keyword">def</span> <span class="function">send_message</span>(agent_id, message, target=<span class="string">"all"</span>):
+    publisher.send_string(<span class="string">f"{target} {json.dumps({
+        'agent_id': agent_id,
+        'message': message,
+        'timestamp': time.time()
+    })}"</span>)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>비동기 통신 패턴과 메시지 라우팅 전략</p>
+                </div>
+
+                <h3>FastAPI 기반 마이크로서비스</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, WebSocket
+<span class="keyword">from</span> fastapi.middleware.cors <span class="keyword">import</span> CORSMiddleware
+<span class="keyword">import</span> uvicorn
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=[<span class="string">"*"</span>])
+
+<span class="keyword">class</span> <span class="class">ConnectionManager</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.active_connections = []
+        
+    <span class="keyword">async def</span> <span class="function">connect</span>(self, websocket: WebSocket, agent_id: <span class="keyword">str</span>):
+        <span class="keyword">await</span> websocket.accept()
+        self.active_connections.append({<span class="string">"socket"</span>: websocket, <span class="string">"agent_id"</span>: agent_id})
+        
+    <span class="keyword">async def</span> <span class="function">broadcast</span>(self, message: <span class="keyword">str</span>, sender_id: <span class="keyword">str</span>):
+        <span class="keyword">for</span> connection <span class="keyword">in</span> self.active_connections:
+            <span class="keyword">if</span> connection[<span class="string">"agent_id"</span>] != sender_id:
+                <span class="keyword">await</span> connection[<span class="string">"socket"</span>].send_text(message)
+
+manager = ConnectionManager()
+
+<span class="annotation">@app.websocket</span>(<span class="string">"/ws/{agent_id}"</span>)
+<span class="keyword">async def</span> <span class="function">websocket_endpoint</span>(websocket: WebSocket, agent_id: <span class="keyword">str</span>):
+    <span class="keyword">await</span> manager.connect(websocket, agent_id)
+    <span class="keyword">try</span>:
+        <span class="keyword">while</span> <span class="keyword">True</span>:
+            data = <span class="keyword">await</span> websocket.receive_text()
+            <span class="keyword">await</span> manager.broadcast(data, agent_id)
+    <span class="keyword">except</span>:
+        <span class="comment"># 연결 해제 처리</span>
+        <span class="keyword">pass</span></code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>실시간 양방향 통신 구현 및 상태 관리</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="knowledge" class="tab-content">
+            <div class="section">
+                <h2>4. 지식 표현 및 검색</h2>
+                
+                <h3>RAG(Retrieval-Augmented Generation) 구현</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA
+<span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> CharacterTextSplitter
+
+<span class="comment"># 교육 자료 로드 및 분할</span>
+loader = TextLoader(<span class="string">"./math_lessons.txt"</span>)
+documents = loader.load()
+text_splitter = CharacterTextSplitter(chunk_size=<span class="number">1000</span>, chunk_overlap=<span class="number">0</span>)
+texts = text_splitter.split_documents(documents)
+
+<span class="comment"># 벡터 DB에 저장</span>
+vectordb = Chroma.from_documents(documents=texts, embedding=embeddings)
+
+<span class="comment"># 검색 체인 생성</span>
+retriever = vectordb.as_retriever(search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>})
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type=<span class="string">"stuff"</span>,
+    retriever=retriever,
+    verbose=<span class="keyword">True</span>
+)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>효과적인 문서 청크 전략 및 검색 관련성 개선 방법</p>
+                </div>
+
+                <h3>지식 그래프 통합</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> neo4j <span class="keyword">import</span> GraphDatabase
+
+<span class="comment"># 지식 그래프 연결</span>
+driver = GraphDatabase.driver(<span class="string">"bolt://localhost:7687"</span>, 
+                              auth=(<span class="string">"neo4j"</span>, <span class="string">"password"</span>))
+
+<span class="comment"># 개념 간 관계 저장</span>
+<span class="keyword">def</span> <span class="function">add_concept_relation</span>(tx, concept1, relation, concept2):
+    tx.run(
+        <span class="string">"MERGE (a:Concept {name: $concept1}) "
+        "MERGE (b:Concept {name: $concept2}) "
+        "MERGE (a)-[:RELATES_TO {type: $relation}]->(b)"</span>,
+        concept1=concept1, relation=relation, concept2=concept2
+    )
+
+<span class="comment"># 관련 개념 검색</span>
+<span class="keyword">def</span> <span class="function">find_related_concepts</span>(tx, concept):
+    result = tx.run(
+        <span class="string">"MATCH (a:Concept {name: $concept})-[r:RELATES_TO]->(b:Concept) "
+        "RETURN b.name, r.type"</span>,
+        concept=concept
+    )
+    <span class="keyword">return</span> [(record[<span class="string">"b.name"</span>], record[<span class="string">"r.type"</span>]) <span class="keyword">for</span> record <span class="keyword">in</span> result]</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>교육 도메인별 지식 구조화 및 온톨로지 설계</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="learning" class="tab-content">
+            <div class="section">
+                <h2>5. 사용자 학습 경로 관리</h2>
+                
+                <h3>학습 상태 추적 시스템</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">import</span> sqlite3
+
+<span class="comment"># 학습 진행 상황 DB 설정</span>
+conn = sqlite3.connect(<span class="string">'learning_progress.db'</span>)
+cursor = conn.cursor()
+
+<span class="comment"># 사용자별 학습 진행 상황 테이블</span>
+cursor.execute(<span class="string">'''
+CREATE TABLE IF NOT EXISTS learning_progress (
+    user_id TEXT,
+    topic_id TEXT,
+    proficiency REAL,
+    completed_exercises INTEGER,
+    last_interaction TEXT,
+    PRIMARY KEY (user_id, topic_id)
+)
+'''</span>)
+
+<span class="comment"># 학습 경로 추적</span>
+<span class="keyword">def</span> <span class="function">update_progress</span>(user_id, topic_id, proficiency_delta, completed=<span class="number">1</span>):
+    cursor.execute(
+        <span class="string">"INSERT INTO learning_progress VALUES (?, ?, ?, ?, datetime('now')) "
+        "ON CONFLICT(user_id, topic_id) DO UPDATE SET "
+        "proficiency = proficiency + ?, "
+        "completed_exercises = completed_exercises + ?, "
+        "last_interaction = datetime('now')"</span>,
+        (user_id, topic_id, proficiency_delta, completed, proficiency_delta, completed)
+    )
+    conn.commit()</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>학습 성취도 측정 및 개인화된 학습 경로 알고리즘</p>
+                </div>
+
+                <h3>적응형 학습 계획 생성기</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">class</span> <span class="class">AdaptiveLearningPathGenerator</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, llm, user_profile, knowledge_graph):
+        self.llm = llm
+        self.user_profile = user_profile
+        self.knowledge_graph = knowledge_graph
+        
+    <span class="keyword">def</span> <span class="function">generate_next_topic</span>(self, recent_topics, performance_metrics):
+        <span class="comment"># 사용자 성과 기반 다음 학습 주제 예측</span>
+        context = <span class="string">f"""
+        학생 프로필: {self.user_profile}
+        최근 학습한 주제: {recent_topics}
+        최근 성과: {performance_metrics}
+        """</span>
+        
+        prompt = <span class="string">f"{context}\n\n위 학생에게 적합한 다음 학습 주제를 선정하고, 난이도를 조정해주세요."</span>
+        next_topic = self.llm(prompt)
+        
+        <span class="comment"># 지식 그래프에서 관련 자료 검색</span>
+        related_materials = self.knowledge_graph.find_related_materials(next_topic)
+        
+        <span class="keyword">return</span> {
+            <span class="string">"topic"</span>: next_topic,
+            <span class="string">"materials"</span>: related_materials,
+            <span class="string">"estimated_time"</span>: self._calculate_time(next_topic, self.user_profile)
+        }</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>학습 난이도 조정 알고리즘과 개인화된 추천 시스템</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="deployment" class="tab-content">
+            <div class="section">
+                <h2>6. 개발 및 배포 환경</h2>
+                
+                <h3>Docker 컴포즈 설정</h3>
+                <div class="code-container">
+                    <pre><code><span class="comment"># docker-compose.yml</span>
+<span class="keyword">version</span>: <span class="string">'3'</span>
+
+<span class="keyword">services</span>:
+  <span class="keyword">fastapi</span>:
+    <span class="keyword">build</span>: ./api
+    <span class="keyword">ports</span>:
+      - <span class="string">"8000:8000"</span>
+    <span class="keyword">volumes</span>:
+      - ./api:/app
+    <span class="keyword">environment</span>:
+      - MODEL_PATH=/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+    <span class="keyword">depends_on</span>:
+      - redis
+      - vector_db
+
+  <span class="keyword">gradio</span>:
+    <span class="keyword">build</span>: ./ui
+    <span class="keyword">ports</span>:
+      - <span class="string">"7860:7860"</span>
+    <span class="keyword">volumes</span>:
+      - ./ui:/app
+    <span class="keyword">environment</span>:
+      - API_URL=http://fastapi:8000
+
+  <span class="keyword">vector_db</span>:
+    <span class="keyword">image</span>: chromadb/chroma
+    <span class="keyword">volumes</span>:
+      - ./data/vectors:/chroma/data
+    <span class="keyword">ports</span>:
+      - <span class="string">"8001:8000"</span>
+
+  <span class="keyword">redis</span>:
+    <span class="keyword">image</span>: redis:alpine
+    <span class="keyword">ports</span>:
+      - <span class="string">"6379:6379"</span>
+    <span class="keyword">volumes</span>:
+      - redis_data:/data
+      
+  <span class="keyword">neo4j</span>:
+    <span class="keyword">image</span>: neo4j:latest
+    <span class="keyword">environment</span>:
+      - NEO4J_AUTH=neo4j/password
+    <span class="keyword">ports</span>:
+      - <span class="string">"7474:7474"</span>
+      - <span class="string">"7687:7687"</span>
+    <span class="keyword">volumes</span>:
+      - neo4j_data:/data
+
+<span class="keyword">volumes</span>:
+  <span class="keyword">redis_data</span>:
+  <span class="keyword">neo4j_data</span>:</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>마이크로서비스 아키텍처 설계 및 컨테이너 간 통신 최적화</p>
+                </div>
+
+                <h3>llama.cpp 또는 vLLM 로컬 모델 통합</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">from</span> llama_cpp <span class="keyword">import</span> Llama
+
+<span class="comment"># 로컬 LLM 초기화</span>
+llm = Llama(
+    model_path=<span class="string">"./models/mistral-7b-instruct-v0.1.Q4_K_M.gguf"</span>,
+    n_ctx=<span class="number">4096</span>,  <span class="comment"># 컨텍스트 길이</span>
+    n_gpu_layers=<span class="number">-1</span>,  <span class="comment"># GPU 가속 활성화</span>
+    verbose=<span class="keyword">False</span>
+)
+
+<span class="comment"># 에이전트별 특화 모델 로드</span>
+<span class="keyword">def</span> <span class="function">get_specialized_llm</span>(agent_type):
+    <span class="keyword">if</span> agent_type == <span class="string">"math"</span>:
+        <span class="keyword">return</span> Llama(model_path=<span class="string">"./models/wizardmath-7b.Q4_K_M.gguf"</span>, n_ctx=<span class="number">4096</span>)
+    <span class="keyword">elif</span> agent_type == <span class="string">"coding"</span>:
+        <span class="keyword">return</span> Llama(model_path=<span class="string">"./models/codellama-7b.Q4_K_M.gguf"</span>, n_ctx=<span class="number">4096</span>)
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> llm  <span class="comment"># 기본 모델</span></code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>모델 양자화 및 가속화 기법, 다중 모델 효율적 메모리 관리</p>
+                </div>
+
+                <h2>7. 모니터링 및 평가</h2>
+                
+                <h3>에이전트 성능 로깅 시스템</h3>
+                <div class="code-container">
+                    <pre><code><span class="keyword">import</span> logging
+<span class="keyword">import</span> time
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># 로거 설정</span>
+logging.basicConfig(
+    level=logging.INFO,
+    format=<span class="string">'%(asctime)s - %(name)s - %(levelname)s - %(message)s'</span>,
+    handlers=[
+        logging.FileHandler(<span class="string">"agent_performance.log"</span>),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(<span class="string">"agent_metrics"</span>)
+
+<span class="comment"># 에이전트 응답 시간 및 품질 추적</span>
+<span class="keyword">class</span> <span class="class">AgentMetricsTracker</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.response_times = {}
+        self.user_ratings = {}
+        
+    <span class="keyword">def</span> <span class="function">start_timer</span>(self, agent_id, query_id):
+        self.response_times[<span class="string">f"{agent_id}_{query_id}"</span>] = time.time()
+        
+    <span class="keyword">def</span> <span class="function">end_timer</span>(self, agent_id, query_id):
+        start_time = self.response_times.get(<span class="string">f"{agent_id}_{query_id}"</span>)
+        <span class="keyword">if</span> start_time:
+            duration = time.time() - start_time
+            logger.info(<span class="string">f"Agent {agent_id} response time for query {query_id}: {duration:.4f}s"</span>)
+            <span class="keyword">return</span> duration
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    <span class="keyword">def</span> <span class="function">log_user_rating</span>(self, agent_id, query_id, rating):
+        self.user_ratings[<span class="string">f"{agent_id}_{query_id}"</span>] = rating
+        logger.info(<span class="string">f"User rated agent {agent_id}'s response to query {query_id} as {rating}/5"</span>)</code></pre>
+                    <button class="copy-btn" onclick="copyCode(this)">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+                        </svg>
+                        복사
+                    </button>
+                </div>
+
+                <div class="learning-point">
+                    <h4>학습 필요 요소</h4>
+                    <p>학습 효과성 메트릭 설계 및 사용자 경험 피드백 수집 방법</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>결론</h2>
+            <p>멀티 에이전트 학습 도우미를 개발하려면 위에서 설명한 기술 스택들을 단계적으로 통합해 나가는 것이 중요합니다. 가장 먼저 LangChain이나 AutoGen으로 기본 에이전트 구조를 만들고, 벡터 스토어와 메모리 시스템을 추가한 다음, 에이전트 간 통신과 학습 경로 관리 시스템을 구축하는 순서로 접근하시면 효율적입니다.</p>
+            <p>특히 멀티 에이전트 시스템의 복잡성을 관리하기 위해 모듈식 설계와 명확한 인터페이스 정의에 초점을 맞추시는 것이 실제 구현에 도움이 될 것입니다.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 오픈소스 LLM 기반 멀티 에이전트 학습 도우미</p>
+    </footer>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].className = tabcontent[i].className.replace(" active", "");
+            }
+            tablinks = document.getElementsByClassName("tab");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).className += " active";
+            evt.currentTarget.className += " active";
+        }
+
+        function copyCode(btn) {
+            const code = btn.previousElementSibling.textContent;
+            navigator.clipboard.writeText(code);
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+                <svg class="copy-icon" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+                복사됨!
+            `;
+            btn.style.backgroundColor = 'rgba(76, 175, 80, 0.3)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            }, 2000);
+        }
+
+        // 페이지 로드 시 첫 번째 탭 활성화
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.tab').click();
+        });
+    </script>
+</body>
+</html>
