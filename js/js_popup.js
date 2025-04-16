@@ -28,3 +28,29 @@ function over(obj) {
 function out(obj) {
     obj.src="../image/r6s_logo.png";
 }
+
+// const over = (obj) => {
+//     obj.src="../image/r6-siege-x-logo.avif";
+// }
+// const over = (obj) => {
+//     obj.src="../image/r6s_logo.png";
+// }
+
+// var close_time; //시간 정보
+// var close_time2; //10초 설정
+
+// clearTimeout(close_time); //재호출 정지
+// close_time=setTimeout("close_window()", 10000); //1/1000초 지정, 바로시작
+// show_time(); //실시간 시간 보여주기기
+
+// function show_time() {
+//     let divClock = document.getElementById('Time');
+//     divClock.innerText = close_time2; //10초 삽입 시작작
+//     close_time2--; //1초씩 감소소
+// setTimeout("show_time()", 1000); //1초마다 갱신신
+// }
+
+// function close_window() { //함수정의
+//     window.close(); //윈도우 닫기
+//     alert("10초가 지나서 창을 닫습니다.");
+// }
