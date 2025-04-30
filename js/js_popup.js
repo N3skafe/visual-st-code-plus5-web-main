@@ -1,5 +1,35 @@
+function setCookie(name, value, expiredays) {
+    var date = new Date();
+    date.setDate(date.getDate() + expiredays);
+     document.cookie = escape(name) + "=" + escape(value) + "; expires=" + date.toUTCString() + "; path=/" + ";SameSite=None; Secure";
+}
+function getCookie(name) {
+    var cookie = document.cookie;
+    console.log("쿠키를 요청합니다.");
+    if (cookie != "") {
+        var cookie_array = cookie.split("; ");
+        for ( var index in cookie_array) {
+            var cookie_name = cookie_array[index].split("=");
+            if (cookie_name[0] == "popupYN") {
+                return cookie_name[1];
+            }
+        }
+    }
+    return ;
+
+}
 function pop_up() {
-    window.open("../popup/popup.html", "popup test", "width=400, height=400, left=100, top=100, resizable=yes, scrollbars=yes");
+    var cookieCheck = getCookie("popupYN");
+    if (cookieCheck != "N"){
+    window.open("../popup/popup.html", "popup test", "width=1280, height=720, resizable=yes, scrollbars=no");
+    }
+}
+function closePopup() {
+    if (document.getElementById('check_popup').value) {
+        setCookie("popupYN", "N", 1);
+        console.log("쿠키를 설정합니다.");
+        self.close();
+    }
 }
 function show_clock(){
     let currentDate= new Date(); // 현재시스템날짜객체생성
@@ -29,6 +59,8 @@ function out(obj) {
     obj.src="../image/r6s_logo.png";
 }
 
+
+//화살표 함수
 // const over = (obj) => {
 //     obj.src="../image/r6-siege-x-logo.avif";
 // }
@@ -36,6 +68,7 @@ function out(obj) {
 //     obj.src="../image/r6s_logo.png";
 // }
 
+//팝업창을 닫는 함수
 // var close_time; //시간 정보
 // var close_time2; //10초 설정
 
