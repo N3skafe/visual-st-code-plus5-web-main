@@ -1,4 +1,5 @@
- import { session_set2 } from './js_session.js';
+import { session_set2 } from './js_session.js';
+import { encrypt_text } from './js_crypto.js';
 
 function join(){ // 회원가입기능
     let form = document.querySelector("#join_form"); // 로그인폼식별자
@@ -36,19 +37,27 @@ function join(){ // 회원가입기능
         re_password.focus();
         return;
     }
-        if (!agree.checked) { // 약관 동의 확인
+    if (!agree.checked) { // 약관 동의 확인
         alert("약관에 동의하셔야 가입이 가능합니다.");
         return;
     }
 
     else{
         const newSignUp = new SignUp(name.value, email.value, password.value, re_password.value); // 회원가입정보객체생성
-        session_set2(newSignUp); // 세션저장및객체전달
+        const encryptedData = encrypt_text(JSON.stringify(newSignUp)); // 데이터 암호화
+        sessionStorage.setItem("Session_Storage_join", encryptedData); // 암호화된 데이터 저장
+        console.log("암호화된 데이터:", encryptedData);
         form.submit(); // 폼실행
     }
 }
 
-document.getElementById("join_btn").addEventListener('click', join); // 이벤트리스너
+// 이벤트리스너
+document.addEventListener('DOMContentLoaded', () => {
+    const joinBtn = document.getElementById('join_btn');
+    if (joinBtn) {
+        joinBtn.addEventListener('click', join);
+    }
+});
 
 class SignUp {
     constructor(name, email, password, re_password) {
@@ -57,23 +66,23 @@ class SignUp {
         this._email = email;
         this._password = password;
         this._re_password = re_password;
- }
+    }
 
-// 전체 회원 정보를 한 번에 설정하는 함수
-setUserInfo(name, email, password, re_password) {
-    this._name = name;
-    this._email = email;
-    this._password = password;
-    this._re_password = re_password;
-}
+    // 전체 회원 정보를 한 번에 설정하는 함수
+    setUserInfo(name, email, password, re_password) {
+        this._name = name;
+        this._email = email;
+        this._password = password;
+        this._re_password = re_password;
+    }
 
-// 전체 회원 정보를 한 번에 가져오는 함수
-getUserInfo() {
-    return {
-        name: this._name,
-        email: this._email,
-        password: this._password,
-        re_password: this._re_password
+    // 전체 회원 정보를 한 번에 가져오는 함수
+    getUserInfo() {
+        return {
+            name: this._name,
+            email: this._email,
+            password: this._password,
+            re_password: this._re_password
         };
     }
 }

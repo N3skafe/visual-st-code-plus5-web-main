@@ -48,12 +48,22 @@ function isAuthenticated() { // 사용자 인증 상태 확인
 }
 
 export function checkAuth() { // 인증 검사 수행
+    // 현재 페이지가 로그인이나 로그아웃 페이지인지 확인
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath.includes('login.html');
+    const isLogoutPage = currentPath.includes('logout.html');
+    
+    // 로그인이나 로그아웃 페이지면 토큰 검사 건너뛰기
+    if (isLoginPage || isLogoutPage) {
+        return;
+    }
+
     const authenticated = isAuthenticated(); // 한 번만 검증 호출
-        if (authenticated) {
-            alert('정상적으로 토큰이 검증되었습니다.');
-        }
-        else {
-            alert('토큰 검증 에러!! 인증되지 않은 접근!');
-            window.location.href = '../index.html'; // 로그인 페이지에서 원래 페이지로 이동
-        }
+    if (authenticated) {
+        alert('정상적으로 토큰이 검증되었습니다.');
+    }
+    else {
+        alert('토큰 검증 에러!! 인증되지 않은 접근입니다.');
+        window.location.href = '../login/login.html'; // 로그인 페이지 이동
+    }
 }
