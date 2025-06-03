@@ -14,8 +14,7 @@ function init(){ // 로그인 폼에 쿠키에서 가져온 아이디 입력
 }
 document.addEventListener('DOMContentLoaded', () => {
     init(); // 쿠키에서 아이디 가져오기
-    checkAuth(); // 인증 검사
-    init_logined(); // 로그인 시 세션 복호화
+
 });
 
 function init_logined(){
