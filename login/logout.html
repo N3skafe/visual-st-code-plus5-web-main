@@ -12,14 +12,12 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="../css/login.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.5/purify.min.js" integrity="sha512-/CUtA84sWWqWEBejNrrtWa7Yc4cth3Ome2ymvCKOo9YcZ4sh98tndUy4LutE2xGcAgD4fyz16y+gSyJdGCB5ww==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
-        <script type="text/javascript" src="../js/js_login.js" defer></script>
-        <script type="text/javascript" src="../js/js_session.js" defer></script>
+        <script type="module" src="../js/js_logined.js" defer></script>
+        <script type="module" src="../js/js_session.js" defer></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" integrity="sha512-a+SUDuwNzXDvz4XrIcXHuCf089/iJAoN4lmrXJg18XnduKK6YlDHNRalv4yd1N40OKI80tFidF+rqTFKGPoWFQ==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
-
-
     </head>
 
-    <body class = "text-center" onload="init();">
+    <body class = "text-center">
         <section class="vh-100 gradient-custom">
             <div class="container py-5 h-100">
               <div class="row d-flex justify-content-center align-items-center h-100">
@@ -31,9 +29,7 @@
             
                             <h2 class="fw-bold mb-2 text-uppercase">로그아웃 하시겠습니까?</h2>
                             
-                            <form method="get" action="/login/index_login.html" id="login_form">
-                                <button data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-light btn-lg px-5" id="login_btn" type="button">로그아웃</button>
-                            </form>
+                            <button id="logout_btn" class="btn btn-outline-light btn-lg px-5" type="button">로그아웃</button>
             
                             <div class="d-flex justify-content-center text-center mt-4 pt-1">
                             <a href="#!" class="text-white"><i class="fab fa-facebook-f fa-lg"></i></a>

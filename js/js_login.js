@@ -1,5 +1,5 @@
 import { session_set, session_get, session_check } from './js_session.js';
-import { encrypt_text, decrypt_text } from './js_crypto.js';
+import { encrypt_text, decrypt_text, getDecryptedSessionData } from './js_crypto.js';
 import { generateJWT, checkAuth } from './js_jwt_token.js';
 
 function init(){ // 로그인 폼에 쿠키에서 가져온 아이디 입력
@@ -9,13 +9,28 @@ function init(){ // 로그인 폼에 쿠키에서 가져온 아이디 입력
     if(get_id) {
         emailInput.value = get_id;
         idsave_check.checked = true;
-        }
+    }
     session_check(); // 세션 유무 검사
+    
+    // 로그인 시도 횟수 초기화
+    if (!localStorage.getItem('login_count')) {
+        localStorage.setItem('login_count', '0');
+    }
+    // 제한 시간 초기화
+    if (!localStorage.getItem('login_restriction_time')) {
+        localStorage.setItem('login_restriction_time', '0');
+    }
+
+    // 저장된 회원가입 데이터 확인
+    const decryptedData = getDecryptedSessionData("Session_Storage_join");
+    if (decryptedData) {
+        console.log("저장된 회원가입 데이터:", JSON.parse(decryptedData));
+    }
 }
 document.addEventListener('DOMContentLoaded', () => {
     init(); // 쿠키에서 아이디 가져오기
-    checkAuth(); // 인증 검사
-    init_logined(); // 로그인 시 세션 복호화
+    // checkAuth(); // 인증 검사
+    // init_logined(); // 로그인 시 세션 복호화
 });
 
 function init_logined(){
@@ -33,10 +48,24 @@ const check_input = () => {
     const emailInput= document.getElementById('typeEmailX');
     const passwordInput = document.getElementById('typePasswordX');
 
+    // 로그인 제한 시간 체크
+    const restrictionTime = parseInt(localStorage.getItem('login_restriction_time')) || 0;
+    const currentTime = Date.now();
+    
+    if (restrictionTime > currentTime) {
+        const remainingTime = Math.ceil((restrictionTime - currentTime) / 1000);
+        alert(`로그인이 제한되었습니다. ${remainingTime}초 후에 다시 시도해주세요.`);
+        return false;
+    }
 
+    // 로그인 시도 횟수 증가
+    let loginCount = parseInt(localStorage.getItem('login_count')) || 0;
+    loginCount++;
+    localStorage.setItem('login_count', loginCount.toString());
 
     const c = '아이디, 패스워드를체크합니다';
     alert(c);
+    alert(`현재 로그인 시도 횟수: ${loginCount}회`);
 
     const emailValue = emailInput.value.trim();
     const passwordValue = passwordInput.value.trim();
@@ -66,10 +95,33 @@ const check_input = () => {
         alert('아이디는최소5글자이상입력해야합니다.');
         return false;
     }
+    if (emailValue.length > 15) {
+        alert('이메일은15글자이하로입력해야합니다.');
+        return false;
+    }
     if (passwordValue.length < 12) {
         alert('비밀번호는반드시12글자이상입력해야합니다.');
         return false;
     }
+    if (passwordValue.length > 20) {
+        alert('비밀번호는20글자이하로입력해야합니다.');
+        return false;
+    }
+
+    // 연속된 문자나 숫자 체크 (3글자 이상 반복)
+    const hasRepeatingPattern = /(.)\1{2,}/.test(passwordValue);
+    if (hasRepeatingPattern) {
+        alert('비밀번호에3글자이상연속되는문자나숫자가포함되어있습니다.');
+        return false;
+    }
+
+    // 연속된 숫자나 문자 체크 (2개 이상 연속)
+    const hasSequentialPattern = /(?:012|123|234|345|456|567|678|789|987|876|765|654|543|432|321|210|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|zyx|yxw|xwv|wvu|vut|uts|tsr|srq|rqp|qpo|pon|onm|nml|mlk|lkj|kji|jih|ihg|hgf|gfe|fed|edc|dcb|cba)/i.test(passwordValue);
+    if (hasSequentialPattern) {
+        alert('비밀번호에연속된문자나숫자가포함되어있습니다.');
+        return false;
+    }
+
     const hasSpecialChar = passwordValue.match(/[!,@#$%^&*()_+\=\[\]{};':"\\|,.<>\/?]+/) !== null; // 정규식으로 특수문자 확인 리눅스에서 많이 사용
 
     if (!hasSpecialChar) {
@@ -85,9 +137,21 @@ const check_input = () => {
         return false;
     }
     if (!sanitizedEmail) { // Sanitize된 비밀번호 사용
+        // 로그인 실패 시 카운트 증가 및 제한 시간 설정
+        if (loginCount >= 3) {
+            const restrictionEndTime = currentTime + (60 * 1000); // 1분 제한
+            localStorage.setItem('login_restriction_time', restrictionEndTime.toString());
+            alert('로그인 시도가 3회 실패하여 1분간 로그인이 제한됩니다.');
+        }
         return false;
     }
     if (!sanitizedPassword) { // Sanitize된 비밀번호 사용
+        // 로그인 실패 시 카운트 증가 및 제한 시간 설정
+        if (loginCount >= 3) {
+            const restrictionEndTime = currentTime + (60 * 1000); // 1분 제한
+            localStorage.setItem('login_restriction_time', restrictionEndTime.toString());
+            alert('로그인 시도가 3회 실패하여 1분간 로그인이 제한됩니다.');
+        }
         return false;
     }
     if(idsave_check.checked == true) { // 아이디 체크 o
@@ -98,6 +162,10 @@ const check_input = () => {
     else{ // 아이디 체크 x
         setCookie("id", emailValue.value, 0); //날짜를 0 - 쿠키 삭제
     }
+
+    // 로그인 성공 시 카운트와 제한 시간 초기화
+    localStorage.setItem('login_count', '0');
+    localStorage.setItem('login_restriction_time', '0');
 
     console.log('이메일:', emailValue);
     console.log('비밀번호:', passwordValue);
@@ -152,5 +220,7 @@ function session_del() {//세션 삭제
 }
 function logout(){
     session_del(); // 세션 삭제
+    localStorage.setItem('login_count', '0'); // 로그아웃 시 카운트 초기화
+    localStorage.setItem('login_restriction_time', '0'); // 로그아웃 시 제한 시간 초기화
     location.href='../index.html';
 }
